@@ -7,7 +7,7 @@
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-userscript-00485B?style=for-the-badge&logo=tampermonkey&logoColor=white)
 ![WhatsApp Web](https://img.shields.io/badge/WhatsApp-Web-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Versão](https://img.shields.io/badge/versão-3.0-blue?style=for-the-badge)
+![Versão](https://img.shields.io/badge/versão-3.2-blue?style=for-the-badge)
 
 </div>
 
@@ -28,6 +28,7 @@ Escreva o que quiser **entre dois-pontos**. Ao digitar o `:` de fechamento, o te
 | `:terça:` | `terça-feira (10/11)` |
 | `:terça, quarta, quinta:` | `terça-feira (10/11), quarta-feira (11/11) e quinta-feira (12/11)` |
 | `:11/11:` | `quarta-feira (11/11)` |
+| `:hoje:` | `quinta-feira (05/11)` |
 | `:sexta, 16/11:` | `sexta-feira (06/11) e segunda-feira (16/11)` |
 | `:ter qua qui:` | `terça-feira (10/11), quarta-feira (11/11) e quinta-feira (12/11)` |
 
@@ -60,6 +61,7 @@ Cada bloco entre `:` é resolvido de forma independente, então dá para usar qu
 ## 🧠 Regras de interpretação
 
 - **Dia da semana → próxima ocorrência.** O script procura o primeiro dia correspondente **a partir de amanhã**. Digitar `:quinta:` numa quinta devolve a quinta da semana seguinte.
+- **`:hoje:` devolve o dia de hoje**, sempre (independe de `INCLUIR_HOJE`), e pode ser misturado: `:hoje, sexta:`.
 - **Data → dia da semana correto.** `:11/11:` descobre sozinho que é quarta-feira.
 - **Ano na saída:** com `INCLUIR_ANO = true`, o resultado vem como `terça-feira (10/11/2026)`.
 - **Data sem ano que já passou** vira o ano seguinte.
@@ -79,6 +81,7 @@ Cada bloco entre `:` é resolvido de forma independente, então dá para usar qu
 | Sexta | `sex`, `sexta`, `sexta-feira` |
 | Sábado | `sab`, `sabado`, `sábado` |
 | Domingo | `dom`, `domingo` |
+| Hoje | `hoje` |
 
 ## 🚀 Instalação
 
@@ -121,7 +124,7 @@ const INCLUIR_ANO = false;
 const DELIMITADOR = ':';
 
 // true = mostra no console (F12) o que o script entendeu
-const DEBUG = false;
+const DEBUG = true;
 ```
 
 ### Trocar o gatilho `:`
@@ -154,7 +157,7 @@ Limitações:
 |---|---|
 | Nada acontece ao digitar `:ter:` | Aviso azul no menu do Tampermonkey? Ative **Permitir Scripts de Usuário** (passo 2) e recarregue a página |
 | O script aparece como desativado | Clique no ícone do Tampermonkey e confirme que o script está com o botão ligado |
-| Sobra um `:` na frente do resultado | Corrigido na 3.0. Se acontecer, atualize o script e recarregue o WhatsApp Web |
+| Sobra um `:` na frente do resultado | Atualize para a 3.2 (que remove o `:` sobrando) e recarregue o WhatsApp Web. Se persistir, copie o console (F12) com `DEBUG = true` |
 | Não troca quando a mensagem **começa** com `:` | Atualize para a versão mais recente. Se persistir, troque o `DELIMITADOR` ou ative o `DEBUG` e veja o console (F12) |
 | Funcionava e parou | O WhatsApp Web atualizou o editor de texto. O script pode precisar de ajuste |
 | `:ter:` virou algo inesperado | Confira o dia de hoje no computador: as datas são calculadas a partir dele |
@@ -165,8 +168,9 @@ Limitações:
 2. Quando for, lê o texto da linha antes do cursor na caixa de mensagem.
 3. Procura o padrão `:conteúdo:` no final do texto.
 4. Converte cada item para uma data, resolvendo dias da semana pela próxima ocorrência.
-5. Apaga o trecho digitado **um caractere por vez, conferindo o texto da linha a cada passo**, até sobrar só o que estava antes dele. Depois digita o resultado com `document.execCommand('insertText')`, o que mantém o editor do WhatsApp consistente e o histórico de desfazer (`Ctrl + Z`) funcionando.
-6. Se algo sobrar e não sair, usa um plano B que seleciona o resto e simula um "colar".
+5. **Seleciona o trecho digitado, espera o editor registrar a seleção e insere o resultado por cima**, com `document.execCommand('insertText')`. É uma operação só, sem apagar letra por letra, e o `Ctrl + Z` continua funcionando.
+6. Confere a **linha inteira** depois da troca (e de novo após ~120 ms, quando o editor assenta). Se sobrou algum caractere antes do resultado, como o `:` de abertura ou o trecho original, ele é removido.
+7. Se o editor não aceitar a substituição, tenta simular um "colar" sobre a seleção e, em último caso, apaga com `backspace` conferindo a linha a cada passo.
 
 Nenhum dado sai do seu navegador. O script não faz requisições de rede nem armazena nada.
 
@@ -182,7 +186,10 @@ A partir da versão 3.0 o script é bem mais leve:
 
 | Versão | Mudanças |
 |---|---|
-| **3.0** | Corrigido o `:` que sobrava na frente do resultado. Removidos o monitoramento de qualquer tecla e o listener de `input`. Apagar o trecho agora confere o texto a cada passo. |
+| **3.2** | Novo `:hoje:`. A troca passou a selecionar e substituir de uma vez (sem apagar e reescrever letra por letra), com colar e backspace como reserva. Corrigida a falha quando a mensagem começa com `:`. |
+| 3.1 | Depois da troca, o script confere a linha inteira (duas vezes) e remove o `:` que eventualmente sobrou. `DEBUG` vem ligado por padrão para diagnóstico. |
+| 3.0 | Corrigido o `:` que sobrava na frente do resultado. Removidos o monitoramento de qualquer tecla e o listener de `input`. Apagar o trecho agora confere o texto a cada passo. |
+| 2.0 | Incluído opção de acrescenter o ano |
 | 1.6 | Troca por "backspace" em vez de seleção; plano B com colar; suporte a teclado ABNT. |
 | 1.0 | Primeira versão. |
 
@@ -190,7 +197,7 @@ A partir da versão 3.0 o script é bem mais leve:
 
 ```
 .
-├── whatsapp-dias.user.js   # o userscript
+├── expansor-dias.user.js   # o userscript
 └── README.md               # este arquivo
 ```
 
