@@ -7,7 +7,7 @@
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-userscript-00485B?style=for-the-badge&logo=tampermonkey&logoColor=white)
 ![WhatsApp Web](https://img.shields.io/badge/WhatsApp-Web-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Versão](https://img.shields.io/badge/versão-1.0-blue?style=for-the-badge)
+![Versão](https://img.shields.io/badge/versão-1.1-blue?style=for-the-badge)
 
 </div>
 
